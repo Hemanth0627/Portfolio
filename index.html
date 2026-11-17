@@ -131,6 +131,23 @@
   }
   .nav a.link:hover { color: var(--text); }
   .nav a.link.active { color: var(--ink); background: var(--text); }
+  /* four-line menu button: phones and tablets only */
+  .menu-btn {
+    display: none; flex: none; position: relative; width: 42px; height: 42px; margin: 0 -4px 0 -10px; padding: 0;
+    border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,0.04); cursor: pointer;
+  }
+  .menu-btn span {
+    position: absolute; left: 12px; width: 18px; height: 2px; border-radius: 2px; background: var(--text);
+    transition: transform .3s cubic-bezier(.2,.8,.2,1), opacity .2s, top .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .menu-btn span:nth-child(1) { top: 13px; }
+  .menu-btn span:nth-child(2) { top: 18px; }
+  .menu-btn span:nth-child(3) { top: 23px; }
+  .menu-btn span:nth-child(4) { top: 28px; }
+  .nav.open .menu-btn span:nth-child(1), .nav.open .menu-btn span:nth-child(4) { top: 20px; }
+  .nav.open .menu-btn span:nth-child(1) { transform: rotate(45deg); }
+  .nav.open .menu-btn span:nth-child(4) { transform: rotate(-45deg); }
+  .nav.open .menu-btn span:nth-child(2), .nav.open .menu-btn span:nth-child(3) { opacity: 0; }
 
   /* ---------- Layout ---------- */
   main { position: relative; }
@@ -488,7 +505,21 @@
     .grid { max-width: 560px; margin: 0 auto; }
     .grid > .card { flex-basis: 100%; }
     .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 44px; }
-    .nav ul { display: none; }
+    .nav-inner { position: relative; padding-left: 18px; gap: 12px; }
+    .menu-btn { display: block; }
+    .brand { margin-right: auto; }
+    /* the links drop down from the bar */
+    .nav ul {
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      flex-direction: column; gap: 2px; padding: 8px;
+      background: rgba(10, 13, 34, 0.94); border: 1px solid var(--line); border-radius: 22px;
+      backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+      box-shadow: 0 24px 60px -20px rgba(0,0,0,0.7);
+      opacity: 0; visibility: hidden; transform: translateY(-8px);
+      transition: opacity .25s, transform .25s cubic-bezier(.2,.8,.2,1), visibility 0s .25s;
+    }
+    .nav.open ul { opacity: 1; visibility: visible; transform: none; transition: opacity .25s, transform .25s cubic-bezier(.2,.8,.2,1); }
+    .nav a.link { display: block; padding: 14px 18px; font-size: 16px; border-radius: 14px; }
     .hero-grid { grid-template-columns: 1fr; gap: 40px; }
     .portrait { width: 180px; }
   }
@@ -518,8 +549,11 @@
 
 <header class="nav">
   <nav class="nav-inner" aria-label="Primary">
+    <button class="menu-btn" id="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+      <span></span><span></span><span></span><span></span>
+    </button>
     <a class="brand" href="#hero">Hemanthakumar <span>H.</span></a>
-    <ul>
+    <ul id="nav-links">
       <li><a class="link active" href="#hero">Home</a></li>
       <li><a class="link" href="#work">Work</a></li>
       <li><a class="link" href="#about">About</a></li>
@@ -1112,6 +1146,19 @@
     });
   }, { rootMargin: "-45% 0px -50% 0px" });
   document.querySelectorAll("main section").forEach(s => io.observe(s));
+
+  // Mobile menu
+  const navEl = document.querySelector(".nav"), menuBtn = document.getElementById("menu-btn");
+  const setMenu = open => {
+    navEl.classList.toggle("open", open);
+    menuBtn.setAttribute("aria-expanded", String(open));
+    menuBtn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  };
+  menuBtn.addEventListener("click", () => setMenu(!navEl.classList.contains("open")));
+  links.forEach(l => l.addEventListener("click", () => setMenu(false)));
+  document.addEventListener("click", e => { if (!navEl.contains(e.target)) setMenu(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && navEl.classList.contains("open")) { setMenu(false); menuBtn.focus(); } });
+  matchMedia("(min-width: 961px)").addEventListener("change", e => { if (e.matches) setMenu(false); });
 
   // Contact form → opens the visitor's mail client (no backend required)
   const form = document.getElementById("contact-form");
